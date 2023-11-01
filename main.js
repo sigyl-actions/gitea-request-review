@@ -30,13 +30,17 @@ async function run() {
         "reviewers-2"
       ];
     
-    const reviews = (await client
+
+    const allReviews = (await client
       .repository
       .repoListPullReviews({
         owner,
         repo,
         index: core.getInput('pr') || 72,
-      })).filter(
+      }))
+
+    const reviews = allReviews
+      .filter(
         ({
           dismissed,
           official,
@@ -144,6 +148,13 @@ async function run() {
     console.log(
       JSON.stringify(
         {
+          allReviews: allReviews
+            .filter(
+              ({
+                official,
+              }) => official,
+            ),
+          reviews,
           teamReviews,
           nonDismissedReview,
           body,
