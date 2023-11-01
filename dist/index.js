@@ -39247,7 +39247,6 @@ var __webpack_exports__ = {};
 
 async function run() {
   try {
-    console.log(process.argv)
     const serverUrl = _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('serverUrl')
       || (_actions_github__WEBPACK_IMPORTED_MODULE_3__.context.runId && _actions_github__WEBPACK_IMPORTED_MODULE_3__.context.serverUrl)
       || 'https://sigyl.com/git'
@@ -39286,24 +39285,25 @@ async function run() {
         .orgListTeams({
           org: owner,
         })
-      ).map(
-        async (
-          team,
-        ) => ({
-          team,
-          members: await client
-            .organization
-            .orgListTeamMembers({
-              id: team.id,
-            })
-        })
-      ));
-    
-    const teams = _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('teams').split(',') || [
-      "reviewers",
-      "reviewers-2"
-    ]
-    console.log(JSON.stringify(reviews, null, 2));
+    ).map(
+      async (
+        team,
+      ) => ({
+        team,
+        members: await client
+          .organization
+          .orgListTeamMembers({
+            id: team.id,
+          })
+      })
+    ));
+
+    const teams = _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('teams')
+      ? _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('teams').split(',')
+      : [
+        "reviewers",
+        "reviewers-2"
+      ];
     const teamReviews = teams
       .map(
         (team) => ({
@@ -39311,15 +39311,9 @@ async function run() {
           reviews: reviews
             .filter(
               ({
-                user,
-              }) => user,
-            )
-            .filter(
-              ({
                 state,
-                user: {
-                  id: userId,
-                }
+                user,
+                team: teamObject,
               }) => orgTeams
                 .find(
                   ({
@@ -39328,12 +39322,12 @@ async function run() {
                     },
                     members,
                   }) => name === team
-                    && members
+                    && (teamObject || members
                       .find(
                         ({
                           id: memberId
-                        }) => memberId === userId,
-                      )
+                        }) => memberId === user.id,
+                      ))
                 ),
             )
         })
@@ -39382,7 +39376,22 @@ async function run() {
           team,
         }) => team,
       );
-    
+    console.log({ deleteRequests })
+
+    if (deleteRequests.length) {
+      console.log(
+        'nothing',
+        await client.repository.repoDeletePullReviewRequests({
+          owner,
+          repo,
+          index: _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('pr') || 72,
+          body: {
+            team_reviewers: deleteRequests,
+          }
+        })
+      )
+    }
+
     const nonDismissedReviews = teamReviews.filter(
       ({
         reviews,

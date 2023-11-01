@@ -9,7 +9,6 @@ import { GiteaApi } from 'gitea-api';
 
 async function run() {
   try {
-    console.log(process.argv)
     const serverUrl = core.getInput('serverUrl')
       || (github.context.runId && github.context.serverUrl)
       || 'https://sigyl.com/git'
@@ -48,24 +47,25 @@ async function run() {
         .orgListTeams({
           org: owner,
         })
-      ).map(
-        async (
-          team,
-        ) => ({
-          team,
-          members: await client
-            .organization
-            .orgListTeamMembers({
-              id: team.id,
-            })
-        })
-      ));
-    
-    const teams = core.getInput('teams').split(',') || [
-      "reviewers",
-      "reviewers-2"
-    ]
-    console.log(JSON.stringify(reviews, null, 2));
+    ).map(
+      async (
+        team,
+      ) => ({
+        team,
+        members: await client
+          .organization
+          .orgListTeamMembers({
+            id: team.id,
+          })
+      })
+    ));
+
+    const teams = core.getInput('teams')
+      ? core.getInput('teams').split(',')
+      : [
+        "reviewers",
+        "reviewers-2"
+      ];
     const teamReviews = teams
       .map(
         (team) => ({
@@ -73,15 +73,9 @@ async function run() {
           reviews: reviews
             .filter(
               ({
-                user,
-              }) => user,
-            )
-            .filter(
-              ({
                 state,
-                user: {
-                  id: userId,
-                }
+                user,
+                team: teamObject,
               }) => orgTeams
                 .find(
                   ({
@@ -90,12 +84,12 @@ async function run() {
                     },
                     members,
                   }) => name === team
-                    && members
+                    && (teamObject || members
                       .find(
                         ({
                           id: memberId
-                        }) => memberId === userId,
-                      )
+                        }) => memberId === user.id,
+                      ))
                 ),
             )
         })
@@ -144,7 +138,22 @@ async function run() {
           team,
         }) => team,
       );
-    
+    console.log({ deleteRequests })
+
+    if (deleteRequests.length) {
+      console.log(
+        'nothing',
+        await client.repository.repoDeletePullReviewRequests({
+          owner,
+          repo,
+          index: core.getInput('pr') || 72,
+          body: {
+            team_reviewers: deleteRequests,
+          }
+        })
+      )
+    }
+
     const nonDismissedReviews = teamReviews.filter(
       ({
         reviews,
