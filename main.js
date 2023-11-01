@@ -23,7 +23,13 @@ async function run() {
       || github?.context?.payload?.repository?.full_name
       || 'actions/batch-example'
     ).split("/");
-
+    const teams = core.getInput('teams')
+      ? core.getInput('teams').split(',')
+      : [
+        "reviewers",
+        "reviewers-2"
+      ];
+    
     const reviews = (await client
       .repository
       .repoListPullReviews({
@@ -60,12 +66,6 @@ async function run() {
       })
     ));
 
-    const teams = core.getInput('teams')
-      ? core.getInput('teams').split(',')
-      : [
-        "reviewers",
-        "reviewers-2"
-      ];
     const teamReviews = teams
       .map(
         (team) => ({
@@ -95,15 +95,6 @@ async function run() {
         })
       );
 
-    console.log(
-      JSON.stringify(
-        {
-          teamReviews,
-        },
-        null,
-        2,
-      )
-    );
     const reviewRequests = teamReviews
       .filter(
         ({
@@ -130,19 +121,11 @@ async function run() {
               || state === 'REQUEST_CHANGES',
           )
       );
-    console.log({ requestIndex })
-    const deleteRequests = teamReviews
-      .slice(requestIndex + 1)
-      .map(
-        ({
-          team,
-        }) => team,
-      );
-    console.log({ deleteRequests })
-
+    const deleteRequests = teams
+      .slice(requestIndex + 1);
+    
     if (deleteRequests.length) {
-      console.log(
-        'nothing',
+        console.log({ deleteRequests })
         await client.repository.repoDeletePullReviewRequests({
           owner,
           repo,
@@ -151,7 +134,6 @@ async function run() {
             team_reviewers: deleteRequests,
           }
         })
-      )
     }
 
     const nonDismissedReviews = teamReviews.filter(
@@ -165,32 +147,21 @@ async function run() {
       nonDismissedReviews.length
     ) {
       console.log('requesting review for', nonDismissedReviews[0].team)
-      console.log(
-        JSON.stringify(
-          {
-            reviews,
-            teams,
-            api: await client.repository.repoCreatePullReviewRequests({
-              owner,
-              repo,
-              index: core.getInput('pr') || 72,
-              body: {
-                team_reviewers: [
-                  nonDismissedReviews[0].team,
-                ],
-              }
-            }),
-          },
-          null,
-          2
-        ),
-      );
+      await client.repository.repoCreatePullReviewRequests({
+        owner,
+        repo,
+        index: core.getInput('pr') || 72,
+        body: {
+          team_reviewers: [
+            nonDismissedReviews[0].team,
+          ],
+        }
+      });
     } else {
-      console.log('nothing done')
+      console.log('nothing requested')
     }
   }
   catch (error) {
-    console.error(error)
     core.setFailed(error.message);
   }
 }
