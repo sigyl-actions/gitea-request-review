@@ -39268,21 +39268,14 @@ async function run() {
         "reviewers-2"
       ];
     
+
     const reviews = (await client
       .repository
       .repoListPullReviews({
         owner,
         repo,
         index: _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('pr') || 72,
-      })).filter(
-        ({
-          dismissed,
-          official,
-          user,
-          team,
-          state,
-        }) => (official && !dismissed) || !user && team && state === 'REQUEST_REVIEW'
-      );
+      }))
 
     const orgTeams = await Promise.all((
       await client
@@ -39331,7 +39324,57 @@ async function run() {
             )
         })
       );
+    const nextTeamReview = teamReviews
+      .find(
+        ({
+          reviews,
+        }) => !reviews.length || reviews
+          .find(
+            ({
+              official,
+              stale,
+              dismissed,
+              state,
+            }) => official && (stale || dismissed || state !== 'APPROVED')
+          )
+      )
+    if (nextTeamReview) {
+      if (!nextTeamReview.reviews.filter(({ user }) => user).length) {
+        await client.repository.repoCreatePullReviewRequests({
+          owner,
+          repo,
+          index: _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('pr') || 73,
+          body: {
+            team_reviewers: [
+              nextTeamReview.team
+            ]
+          },
+        });
+      } else {
+        await client.repository.repoCreatePullReviewRequests({
+          owner,
+          repo,
+          index: _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('pr') || 73,
+          body: {
+            reviewers: nextTeamReview
+              .reviews
+              .filter(
+                ({
+                  official,
+                  stale,
+                  dismissed,
+                  state,
+                  user,
+                }) => user && official && (stale || dismissed || state !== 'APPROVED')
+              ).map(
+                ({ user }) => user.login,
+              )
+          },
+        });
+      }
+    }
 
+    return;
     const requestIndex = teamReviews
       .findIndex(
         ({
@@ -39364,7 +39407,7 @@ async function run() {
         reviews,
       }) => !reviews
         .length
-        || reviews.find(({ state }) => state === 'REQUEST_CHANGES'),
+        || reviews.find(({ state }) => official && (state === 'REQUEST_CHANGES')),
     )[0]
     
     const reviewers = nonDismissedReview
@@ -39382,6 +39425,13 @@ async function run() {
     console.log(
       JSON.stringify(
         {
+          allReviews: allReviews
+            .filter(
+              ({
+                official,
+              }) => official,
+            ),
+          reviews,
           teamReviews,
           nonDismissedReview,
           body,
