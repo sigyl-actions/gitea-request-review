@@ -39,12 +39,11 @@ async function run() {
       })).filter(
         ({
           dismissed,
-          stale,
           official,
           user,
           team,
           state,
-        }) => (official && !dismissed && !stale) || !user && team && state === 'REQUEST_REVIEW'
+        }) => (official && !dismissed) || !user && team && state === 'REQUEST_REVIEW'
       );
 
     const orgTeams = await Promise.all((
@@ -95,20 +94,6 @@ async function run() {
         })
       );
 
-    const reviewRequests = teamReviews
-      .filter(
-        ({
-          reviews,
-        }) => reviews
-          .find(
-            ({
-              state,
-              dismissed,
-              stale,
-            }) => state === 'REQUEST_REVIEW'
-              || state === 'REQUEST_CHANGES',
-          )
-      );
     const requestIndex = teamReviews
       .findIndex(
         ({
