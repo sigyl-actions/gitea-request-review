@@ -39353,6 +39353,21 @@ async function run() {
               || state === 'REQUEST_CHANGES'),
           )
       );
+    const requestIndex = teamReviews
+      .indexOf(
+        ({
+          reviews,
+        }) => reviews
+          .find(
+            ({
+              state,
+              dismissed,
+              stale,
+            }) => !dismissed && !stale && (state === 'REQUEST_REVIEW'
+              || state === 'REQUEST_CHANGES'),
+          )
+      );
+    console.log({ requestIndex })
     const nonDismissedReviews = teamReviews.filter(
       ({
         reviews,
