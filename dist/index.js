@@ -39290,7 +39290,7 @@ async function run() {
         })
       ));
     
-    const teams = _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('teams') || [
+    const teams = _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('teams').split(',') || [
       "reviewers",
       "reviewers-2"
     ]
