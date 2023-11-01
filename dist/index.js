@@ -39354,7 +39354,7 @@ async function run() {
           )
       );
     const requestIndex = teamReviews
-      .indexOf(
+      .findIndex(
         ({
           reviews,
         }) => reviews
@@ -39364,16 +39364,8 @@ async function run() {
               dismissed,
               stale,
               official,
-            }) => console.log(
-              {
-                state,
-                dismissed,
-                stale,
-                official,
-              } 
-            ) ||
-            (official && !dismissed && !stale && (state === 'REQUEST_REVIEW'
-              || state === 'REQUEST_CHANGES')),
+            }) => official && !dismissed && !stale && (state === 'REQUEST_REVIEW'
+              || state === 'REQUEST_CHANGES'),
           )
       );
     console.log({ requestIndex })
