@@ -52,7 +52,7 @@ async function run() {
         })
       ));
     
-    const teams = core.getInput('teams') || [
+    const teams = core.getInput('teams').split(',') || [
       "reviewers",
       "reviewers-2"
     ]
