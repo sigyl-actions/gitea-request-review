@@ -30,13 +30,16 @@ async function run() {
       .repoListPullReviews({
         owner,
         repo,
-        index: core.getInput('pr') || 69,
+        index: core.getInput('pr') || 72,
       })).filter(
         ({
           dismissed,
           stale,
           official,
-        }) => official && !dismissed && !stale
+          user,
+          team,
+          state,
+        }) => (official && !dismissed && !stale) || !user && team && state === 'REQUEST_REVIEW'
       );
 
     const orgTeams = await Promise.all((
@@ -134,20 +137,13 @@ async function run() {
           )
       );
     console.log({ requestIndex })
-    console.log(
-      teamReviews
-        .slice(requestIndex + 1)
-        .filter(
-          ({
-            state,
-          }) => state === 'REQUEST_REVIEW'
-            || state === 'REQUEST_CHANGES',
-        ).map(
-          ({
-            team,
-          }) => team,
-        )
-    );
+    const deleteRequests = teamReviews
+      .slice(requestIndex + 1)
+      .map(
+        ({
+          team,
+        }) => team,
+      );
     
     const nonDismissedReviews = teamReviews.filter(
       ({
@@ -168,7 +164,7 @@ async function run() {
             api: await client.repository.repoCreatePullReviewRequests({
               owner,
               repo,
-              index: core.getInput('pr') || 69,
+              index: core.getInput('pr') || 72,
               body: {
                 team_reviewers: [
                   nonDismissedReviews[0].team,
