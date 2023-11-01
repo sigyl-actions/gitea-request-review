@@ -39363,8 +39363,17 @@ async function run() {
               state,
               dismissed,
               stale,
-            }) => !dismissed && !stale && (state === 'REQUEST_REVIEW'
-              || state === 'REQUEST_CHANGES'),
+              official,
+            }) => console.log(
+              {
+                state,
+                dismissed,
+                stale,
+                official,
+              } 
+            ) ||
+            (official && !dismissed && !stale && (state === 'REQUEST_REVIEW'
+              || state === 'REQUEST_CHANGES')),
           )
       );
     console.log({ requestIndex })
