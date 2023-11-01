@@ -136,30 +136,44 @@ async function run() {
         })
     }
 
-    const nonDismissedReviews = teamReviews.filter(
+    const nonDismissedReview = teamReviews.filter(
       ({
         reviews,
       }) => !reviews
-        .length,
+        .length
+        || reviews.find(({ state }) => state === 'REQUEST_CHANGES'),
+    )[0]
+    
+    const reviewers = nonDismissedReview
+      ? nonDismissedReview.reviews.filter(({ user, state }) => user && state === 'REQUEST_CHANGES')
+      : [];
+
+    const body = {
+      reviewers: reviewers.map(({ user }) => user.login ),
+      team_reviewers: [
+        ...nonDismissedReview ? [
+          nonDismissedReview.team
+        ] : [],
+      ],
+    };
+    console.log(
+      JSON.stringify(
+        {
+          teamReviews,
+          nonDismissedReview,
+          body,
+        },
+        null,
+        2,
+      )
     )
-    if (
-      !reviewRequests.length &&
-      nonDismissedReviews.length
-    ) {
-      console.log('requesting review for', nonDismissedReviews[0].team)
-      await client.repository.repoCreatePullReviewRequests({
-        owner,
-        repo,
-        index: core.getInput('pr') || 72,
-        body: {
-          team_reviewers: [
-            nonDismissedReviews[0].team,
-          ],
-        }
-      });
-    } else {
-      console.log('nothing requested')
-    }
+    
+    await client.repository.repoCreatePullReviewRequests({
+      owner,
+      repo,
+      index: core.getInput('pr') || 72,
+      body,
+    });
   }
   catch (error) {
     core.setFailed(error.message);
