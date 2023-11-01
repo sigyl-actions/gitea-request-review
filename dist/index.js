@@ -39263,13 +39263,13 @@ async function run() {
       || 'actions/batch-example'
     ).split("/");
 
-    const reviews = await client
+    const reviews = (await client
       .repository
       .repoListPullReviews({
         owner,
         repo,
         index: _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('pr') || 69,
-      }).filter(
+      })).filter(
         ({
           dismissed,
           stale,

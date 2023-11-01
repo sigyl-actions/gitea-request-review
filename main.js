@@ -25,13 +25,13 @@ async function run() {
       || 'actions/batch-example'
     ).split("/");
 
-    const reviews = await client
+    const reviews = (await client
       .repository
       .repoListPullReviews({
         owner,
         repo,
         index: core.getInput('pr') || 69,
-      }).filter(
+      })).filter(
         ({
           dismissed,
           stale,
