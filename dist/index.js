@@ -39340,6 +39340,16 @@ async function run() {
       )
     if (nextTeamReview) {
       if (!nextTeamReview.reviews.filter(({ user }) => user).length) {
+        console.log(
+          JSON.stringify(
+            {
+              reason: 'team',
+              nextTeamReview,
+            },
+            null,
+            2,
+          )
+        )
         await client.repository.repoCreatePullReviewRequests({
           owner,
           repo,
@@ -39351,6 +39361,31 @@ async function run() {
           },
         });
       } else {
+
+        console.log(
+          JSON.stringify(
+            {
+              reason: 'users',
+              nextTeamReview,
+              reviewers: nextTeamReview
+                .reviews
+                .filter(
+                  ({
+                    official,
+                    stale,
+                    dismissed,
+                    state,
+                    user,
+                  }) => user && official && (stale || dismissed || state !== 'APPROVED')
+                ).map(
+                  ({ user }) => user.login,
+                )
+            },
+            null,
+            2,
+          )
+        )
+
         await client.repository.repoCreatePullReviewRequests({
           owner,
           repo,
