@@ -39269,7 +39269,13 @@ async function run() {
         owner,
         repo,
         index: _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('pr') || 69,
-      });
+      }).filter(
+        ({
+          dismissed,
+          stale,
+          official,
+        }) => official && !dismissed && !stale
+      );
 
     const orgTeams = await Promise.all((
       await client
@@ -39349,8 +39355,8 @@ async function run() {
               state,
               dismissed,
               stale,
-            }) => !dismissed && !stale && (state === 'REQUEST_REVIEW'
-              || state === 'REQUEST_CHANGES'),
+            }) => state === 'REQUEST_REVIEW'
+              || state === 'REQUEST_CHANGES',
           )
       );
     const requestIndex = teamReviews
@@ -39361,25 +39367,31 @@ async function run() {
           .find(
             ({
               state,
-              dismissed,
-              stale,
-              official,
-            }) => official && !dismissed && !stale && (state === 'REQUEST_REVIEW'
-              || state === 'REQUEST_CHANGES'),
+            }) => state === 'REQUEST_REVIEW'
+              || state === 'REQUEST_CHANGES',
           )
       );
     console.log({ requestIndex })
+    console.log(
+      teamReviews
+        .slice(requestIndex + 1)
+        .filter(
+          ({
+            state,
+          }) => state === 'REQUEST_REVIEW'
+            || state === 'REQUEST_CHANGES',
+        ).map(
+          ({
+            team,
+          }) => team,
+        )
+    );
     
     const nonDismissedReviews = teamReviews.filter(
       ({
         reviews,
       }) => !reviews
-        .filter(
-          ({
-            dismissed,
-            stale,
-          }) => !dismissed && !stale,
-        ).length
+        .length,
     )
     if (
       !reviewRequests.length &&
