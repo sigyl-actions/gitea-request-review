@@ -39247,6 +39247,7 @@ var __webpack_exports__ = {};
 
 async function run() {
   try {
+    console.log('review requester')
     const serverUrl = _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('serverUrl')
       || (_actions_github__WEBPACK_IMPORTED_MODULE_3__.context.runId && _actions_github__WEBPACK_IMPORTED_MODULE_3__.context.serverUrl)
       || 'https://sigyl.com/git'
@@ -39411,6 +39412,7 @@ async function run() {
 
   }
   catch (error) {
+    console.error(error)
     _actions_core__WEBPACK_IMPORTED_MODULE_2__.setFailed(error.message);
   }
 }
