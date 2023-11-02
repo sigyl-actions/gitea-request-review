@@ -9,6 +9,7 @@ import { GiteaApi } from 'gitea-api';
 
 async function run() {
   try {
+    console.log('review requester')
     const serverUrl = core.getInput('serverUrl')
       || (github.context.runId && github.context.serverUrl)
       || 'https://sigyl.com/git'
@@ -173,6 +174,7 @@ async function run() {
 
   }
   catch (error) {
+    console.error(error)
     core.setFailed(error.message);
   }
 }
